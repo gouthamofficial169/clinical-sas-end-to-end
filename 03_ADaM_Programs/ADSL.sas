@@ -6,7 +6,6 @@
 * Platform    : Linux (SAS OnDemand Cloud)
 * Project     : EMR200048052 — EXPAND Trial
 * Description : Create ADaM ADSL — Subject Level Analysis Dataset
-*               BDS structure per ADaMIG v1.3
 * Input       : GASTI_F.DM    (SDTM Demographics Domain)
 * Output      : GASTI_AD.ADSL (Subject Level Analysis Dataset)
 * Standards   : ADaMIG v1.3 | CDISC CT 2026-03-27
@@ -168,8 +167,8 @@ PROC SORT DATA=GASTI_F.DS
 	BY USUBJID;
 	RUN;
 DATA ADSL_RAND;
-	SET GASTI_F.DS;
 	LENGTH USUBJID $ 25. COMPLFL $ 2. EOSSTT $ 20. DCSREAS $ 30. ;
+	SET GASTI_F.DS;
 	BY USUBJID;
 	
 	RETAIN RANDDT ENRLDT EOSDT COMPLFL DCSREAS EOSSTT;
@@ -377,7 +376,7 @@ QUIT;
 /*FINAL SAS DATA  */
 /*------------------------------------------------------------------------------------------  */	
 
-	LIBNAME GASTI_AD "/home/u64240743/gastric/GASTRIC ADAM";
+	LIBNAME GASTI_AD "/home/u64240743/gastric/GASTRIC ADAM RESULT";
 	
 	DATA GASTI_AD.ADSL (LABEL="Subject-Level Analysis Dataset");
 	SET ADSL ;

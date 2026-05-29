@@ -2,7 +2,7 @@
 /* ASSIGN THE ADSL LIBRARY */
 
 /*-----------------------------------------------------------------------------------------  */
-LIBNAME GASTI_AD "/home/u64240743/gastric/GASTRIC ADAM";
+LIBNAME GASTI_AD "/home/u64240743/gastric/GASTRIC ADAM RESULT";RUN;
 /*-----------------------------------------------------------------------------------------  */
 
 DATA TABLE_DM1;
@@ -57,90 +57,44 @@ by ord od;
 /*-----------------------------------------------------------------------------------------  */
 /*AGE CATEOGORY  */
 /*-----------------------------------------------------------------------------------------  */
-/*  Step 1 — Create format with exact labels */
 /*-----------------------------------------------------------------------------------------  */
-proc format;
-  value agegrpf
-    1 = "< 65 Years"
-    2 = ">= 65 Years";
-run;
+/* Get total N for denominator */
+/*-----------------------------------------------------------------------------------------  */
+PROC SQL NOPRINT;
+  SELECT COUNT(*) INTO :TOTAL_N
+  FROM TABLE_DM1
+  WHERE NOT MISSING(AGEGR1N);
+QUIT;
+%PUT TOTAL N = &TOTAL_N.;
 
 /*-----------------------------------------------------------------------------------------  */
-/* Step 2 — Assign age group in ADSL */
-/*-----------------------------------------------------------------------------------------  */
-data adsl_age;
-  set TABLE_DM1 ;
-  where SAFFL = "Y";
-
-  if      AGE <  65 then AGEGR1N = 1;
-  else if AGE >= 65 then AGEGR1N = 2;
-  else                   AGEGR1N = .;
-
-  format AGEGR1N agegrpf.;
-run;
-
-/*-----------------------------------------------------------------------------------------  */
-/* Step 3 — Get total N for denominator */
-/*-----------------------------------------------------------------------------------------  */
-proc sql noprint;
-  select count(*) into :total_n
-  from adsl_age
-  where not missing(AGEGR1N);
-quit;
-%put Total N = &total_n.;
-
-/*-----------------------------------------------------------------------------------------  */
-/* Step 4 — Get actual counts */
+/* Get actual counts */
 /*-----------------------------------------------------------------------------------------  */
 
-proc freq data=adsl_age noprint;
-  tables AGEGR1N / out=age_actual (drop=percent) missing;
-run;
+PROC FREQ DATA=TABLE_DM1 NOPRINT;
+  TABLES AGEGR1N / OUT=AGE_ACTUAL (DROP=PERCENT) MISSING;
+RUN;
 
-/*-----------------------------------------------------------------------------------------  */
-/* Step 5 — Create SKELETON with ALL categoriesThis forces >= 65 to appear even with zero count */
-/*-----------------------------------------------------------------------------------------  */
-
-data age_skeleton;
-  length AGEGR1N 8; 
-  AGEGR1N = 1; output;   /* < 65  */
-  AGEGR1N = 2; output;   /* >= 65 */
-run;
-
-/*-----------------------------------------------------------------------------------------  */
-/* Step 6 — Merge skeleton with actual counts */
-/*-----------------------------------------------------------------------------------------  */
-proc sort data=age_actual;   by AGEGR1N; run;
-proc sort data=age_skeleton; by AGEGR1N; run;
-
-data agec_final;
-  merge age_skeleton (in=a)
-        age_actual   (in=b);
+DATA AGEC_FINAL;
+SET AGE_ACTUAL;
   by AGEGR1N;
   LENGTH STAT CAT $ 15.;
-
-  /* Calculate percentage using total N */
-  if not b then do;
-    COUNT   = 0;
-  end;
-
-  format AGEGR1N agegrpf.;
   
-  cat = "";
+  CAT = "";
   
-  if agegr1n = 1 then do stat = "<65 YEARS"; ORD =1;end;
-  if agegr1n = 2 then do stat = ">= 65 YEARS";ORD = 2;end;
+  IF AGEGR1N = 1 THEN DO STAT = "<65 YEARS"; ORD =1;END;
+  IF AGEGR1N = 2 THEN DO STAT = ">= 65 YEARS";ORD = 2;END;
   
   GROUPA = strip(put(count,3.))||'('||strip(put(count/&total_n*100,3.))||'%'||')';
   
   OD = 2;
   
-  drop count agegr1n;
-run;
+  DROP COUNT AGEGR1N;
+RUN;
 
 
-proc sort data=agec_final;
-by ord od;
+PROC SORT DATA=AGEC_FINAL;
+BY ORD OD;
 
 
 /*-----------------------------------------------------------------------------------------  */
@@ -199,8 +153,8 @@ VARORD = 1;
 KEEP CAT STAT GROUPA ORD OD;
 RUN;
 
-proc sort data=sex3;
-by ord od;
+PROC SORT DATA=SEX3;
+BY ORD OD;
 
 /*RACE  */
 
@@ -390,6 +344,7 @@ footnote2 j=l "Note: BMI derived as Weight(kg)/Height(m)^2.";
 
 footnote3 j=l "Source: &_SASPROGRAMFILE" j=r "Date: &sysdate9."; 
 
+ODS ESCAPECHAR= "^";
 
 proc report data=DEMOFINAL split='*' missing nowd headline headskip spacing=0
 style(report)={outputwidth=100%};

@@ -84,7 +84,7 @@ STYLE= STYLES.TEST ;
 TITLE J=L "Protocol: EMR200048-052" 
 J=R  "Page ^{pageof}";
  
-TITLE3 J=C "Table 16.2.2 Serious Adverse Events Leading to Death";
+TITLE3 J=C "Listing 16.2.2 Serious Adverse Events Leading to Death";
  
 footnote1 j=L "Source: &_SASPROGRAMFILE" j=R "Date: &sysdate9."; 
 
